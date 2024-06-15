@@ -1,58 +1,106 @@
-<!DOCTYPE html><!-- This web page is copied by "https://bazhan.wang" --><html><head><meta charset="utf-8">
-    <title>bilibili html5 player</title>
-    
-    <script type="text/javascript">
-        if (!!navigator.userAgent.match(/AppleWebKit.*Mobile.*/)) {
-            window.location.href = '//www.bilibili.com/blackboard/html5mobileplayer.html' + (window.location.search ? window.location.search + '&posterFirst=1' : '?posterFirst=1');
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Mybbs订阅</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
         }
-    </script>
-    <link rel="stylesheet" type="text/css" href="css/jquery.mCustomScrollbar.min.css">
-    <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
-    <script type="text/javascript" src="js/jquery.mCustomScrollbar.concat.min.js"></script>
-    <script src="js/player-selector.min.js"></script>
-    <script type="text/javascript">
-    var GetUrlValue = function(name) {
-        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
-        var r = window.location.search.substr(1).match(reg);
-        if (r != null) {
-            try {
-                return decodeURIComponent(r[2]);
-            } catch (e) {
-                return null;
-            }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
-        return null;
-    }
-    if (GetUrlValue('bvid')) {
-      window.show_bv = 1;
-    } else {
-      window.show_bv = 0;
-    }
-    </script>
-    <style type="text/css">
-    html, body, .player {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-    }
-    .bilibili-player-video-panel-image-detail {
-        display: none!important;
-    }
+        h1 {
+            text-align: center;
+            color: #5a5a5a;
+        }
+        .rss-item {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 0;
+        }
+        .rss-item:last-child {
+            border-bottom: none;
+        }
+        .rss-item h2 {
+            margin: 0 0 10px;
+            font-size: 1.5em;
+            color: #333;
+        }
+        .rss-item a {
+            text-decoration: none;
+            color: #3498db;
+        }
+        .rss-item a:hover {
+            text-decoration: underline;
+        }
+        .rss-item p {
+            margin: 0;
+            color: #666;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <div id="heimu"></div>
-    <div class="player">
-      <div id="bofqi"></div>
+    <div class="container">
+        <h1>最新 RSS 订阅</h1>
+        <div id="rss-feed"></div>
+        <div id="error-message" class="error"></div>
     </div>
 
-    <script type="text/javascript">
-      var config = {
-        playerKind: "litePlayer"
-      };
-      var Player = new PlayerSelector(config);
+    <script>
+        async function fetchRSS() {
+            try {
+                const response = await fetch('https://bianb-hehe.github.io/atom.xml', { redirect: 'error' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'application/xml');
+                const items = xml.querySelectorAll('entry');
+
+                const container = document.getElementById('rss-feed');
+                container.innerHTML = '';
+                
+                const fragment = document.createDocumentFragment();
+
+                items.forEach(item => {
+                    const title = item.querySelector('title').textContent;
+                    const link = item.querySelector('link').getAttribute('href');
+                    const summary = item.querySelector('summary').textContent;
+
+                    const div = document.createElement('div');
+                    div.className = 'rss-item';
+                    div.innerHTML = `
+                        <h2><a href="${link}" target="_blank">${title}</a></h2>
+                        <p>${summary}</p>
+                    `;
+                    fragment.appendChild(div);
+                });
+
+                container.appendChild(fragment);
+                document.getElementById('error-message').textContent = '';
+            } catch (error) {
+                console.error('Error fetching the RSS feed:', error);
+                document.getElementById('error-message').textContent = '无法获取RSS订阅内容，请稍后再试。';
+            }
+        }
+
+        fetchRSS();
+        setInterval(fetchRSS, 1);  // 每 60 秒更新一次
     </script>
-  
-</body></html>
+</body>
+</html>
